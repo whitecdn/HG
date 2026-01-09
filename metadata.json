@@ -1,0 +1,5 @@
+{
+  "name": "HostGenius Cost & Growth Calculator",
+  "description": "A client-side financial modeling tool for property managers to calculate revenue upside, tool savings, and net impact of switching to HostGenius.",
+  "requestFramePermissions": []
+}
