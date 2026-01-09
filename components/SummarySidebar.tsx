@@ -40,12 +40,7 @@ export const SummarySidebar: React.FC<Props> = ({ state }) => {
       </div>
 
       <div className="space-y-3">
-        {showInvestment && (
-            <div className="flex justify-between items-center animate-fade-in">
-            <span className="text-hg-slate text-sm font-medium">HG Investment</span>
-            <span className="font-bold text-hg-coral">-{formatCurrency(hgCost.monthly)}</span>
-            </div>
-        )}
+        {/* HG Investment line removed */}
         
         {toolSavings.monthly > 0 && (
           <div className="flex justify-between items-center animate-fade-in">

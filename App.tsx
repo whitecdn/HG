@@ -354,52 +354,7 @@ const MainNavigation = ({ currentView, setView, state }: { currentView: ViewMode
 
       {/* Nav Items */}
       <div className="flex-1 py-6 px-3 space-y-2">
-        {/* COST STACK DISPLAY */}
-        {currentView === 'calculator' && (
-          <div className="mx-2 mb-6 p-4 rounded-xl bg-hg-navy-light border border-white/10 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-hg-teal rounded-full blur-2xl opacity-10 group-hover:opacity-20 transition-opacity"></div>
-
-            <div className="relative z-10">
-              <div className="text-[10px] font-bold text-hg-ivory/60 uppercase tracking-widest mb-1">Your Cost</div>
-
-              {state && state.tools ? (
-                (() => {
-                  const baseCost = 65;
-                  const toolSavings = state.tools.filter(t => t.enabled).reduce((acc, t) => acc + (t.costPerDoor || 0), 0);
-                  const finalCost = Math.max(0, baseCost - toolSavings);
-                  const hasSavings = toolSavings > 0;
-
-                  return (
-                    <div>
-                      <div className="flex items-baseline gap-2">
-                        <span className={`text-3xl font-black ${hasSavings ? 'text-hg-teal' : 'text-white'}`}>
-                          ${finalCost}
-                        </span>
-                        <span className="text-xs text-hg-ivory/60 font-medium">/ door</span>
-                      </div>
-
-                      {hasSavings && (
-                        <div className="flex items-center gap-2 mt-1">
-                          <span className="text-xs text-hg-ivory/40 line-through Decoration-hg-coral decoration-2">
-                            ${baseCost}
-                          </span>
-                          <span className="text-[10px] font-bold text-hg-teal bg-hg-teal/10 px-1.5 py-0.5 rounded">
-                            -${toolSavings} tech savings
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()
-              ) : (
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-black text-white">$65</span>
-                  <span className="text-xs text-hg-ivory/60 font-medium">/ door</span>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        {/* COST STACK DISPLAY REMOVED */}
 
         <button
           onClick={() => setView('calculator')}
