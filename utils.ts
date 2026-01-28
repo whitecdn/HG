@@ -142,11 +142,68 @@ export const calculateHGCost = (listings: number) => {
 };
 
 // 3. Tool Savings
+// Discounted rates for specific tools
+const HG_TOOL_RATES: Record<string, number> = {
+  breezeway: 3.49,
+  enso: 5.00,
+  conduitai: 6.00,
+  suiteop: 6.00,
+  guestyshield: 40.00, // Per reservation
+  truvi: 30.00, // Per reservation
+  suiteop_devices: 2.50, // Per device
+  guestypay: 2.50, // Percentage
+};
+
+import { TOOLS_LIST } from './types'; // Import to check subType
+
 export const calculateToolSavings = (listings: number, userTools: UserToolState[]) => {
   let monthlyTotal = 0;
   const itemized = userTools.map(t => {
-    const monthly = t.enabled ? (listings * t.costPerDoor) : 0;
+    let monthly = 0;
+
+    if (t.enabled) {
+      // Find tool definition to check logic type
+      const def = TOOLS_LIST.find(d => d.id === t.id);
+
+      // Logic split:
+      // Logic split:
+      // 1. Quantity Based (Rates per reservation/device)
+      // Logic split:
+      // 1. Quantity Based (Rates per reservation/device)
+      if (def?.subType === 'quantity_based') {
+        const rate = HG_TOOL_RATES[t.id] || 0;
+        const quantity = t.quantity || 0;
+        // Ensure we don't return negative savings. If user pays less than our rate, savings is 0.
+        const savingsPerUnit = Math.max(0, t.costPerDoor - rate);
+
+        const savingsPerDoor = savingsPerUnit * quantity;
+        monthly = listings * savingsPerDoor;
+      }
+      // 2. Percentage Volume Based (GuestyPay)
+      else if (def?.subType === 'percentage_volume') {
+        const rate = HG_TOOL_RATES[t.id] || 0;
+        const volumePerDoor = t.quantity || 0; // "Processed $/Door/Mo"
+        // Savings is (UserRate% - HG_Rate%) * Volume
+        // t.costPerDoor here is the percentage (e.g. 3.0)
+        const rateDiff = Math.max(0, t.costPerDoor - rate);
+
+        const savingsPerDoor = (rateDiff / 100) * volumePerDoor;
+        monthly = listings * savingsPerDoor;
+      }
+      // 2. Standard Tech Tools (Rates per door)
+      else if (HG_TOOL_RATES[t.id] !== undefined) {
+        // Ensure we don't return negative savings.
+        const savingsPerDoor = Math.max(0, t.costPerDoor - HG_TOOL_RATES[t.id]);
+        monthly = listings * savingsPerDoor;
+      }
+      // 3. PMS / Default (Full Cost Savings)
+      else {
+        monthly = listings * t.costPerDoor;
+      }
+    }
+
     if (t.enabled) monthlyTotal += monthly;
+
     return {
       id: t.id,
       monthly,
@@ -187,11 +244,13 @@ export const calculateNetImpact = (hgCostMonthly: number, techSavingsMonthly: nu
 };
 
 // 6. Growth Upside
-export const calculateGrowthUpside = (newProps: number, avgAnnualRev: number, commission: number) => {
+export const calculateGrowthUpside = (newProps: number, avgAnnualRev: number, commission: number, effectiveCostPerDoor?: number) => {
   const annualRevenue = newProps * avgAnnualRev * (commission / 100);
   const monthlyRevenue = annualRevenue / 12;
 
-  const monthlyCost = newProps * HG_COST_PER_DOOR;
+  // Use effective cost if provided (can be negative implies net profit from tech savings), else default
+  const costBasis = effectiveCostPerDoor !== undefined ? effectiveCostPerDoor : HG_COST_PER_DOOR;
+  const monthlyCost = newProps * costBasis;
   const monthlyNetProfit = monthlyRevenue - monthlyCost;
 
   return {

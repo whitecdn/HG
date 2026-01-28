@@ -1207,59 +1207,103 @@ const TabWhatYouGet = () => {
   );
 };
 
-const TabGrowth = ({ state, updateState }: { state: CalculatorState; updateState: (s: Partial<CalculatorState>) => void }) => {
-  const growth = calculateGrowthUpside(state.newProperties, state.avgAnnualRevenue, state.commissionPercent);
+const TabGrowth = ({ state, updateState, effectiveCostPerDoor = 65 }: { state: CalculatorState; updateState: (s: Partial<CalculatorState>) => void, effectiveCostPerDoor?: number }) => {
+  const result = calculateGrowthUpside(state.newProperties, state.avgAnnualRevenue, state.commissionPercent, effectiveCostPerDoor);
+
+  const isNetProfitFromTech = effectiveCostPerDoor < 0; // If negative cost, we are making money just by joining
 
   return (
-    <div className="animate-fade-in space-y-8">
-      <div>
-        <h2 className="text-3xl font-black text-hg-navy mb-4">Growth Potential</h2>
-        <p className="text-hg-slate text-lg">With streamlined ops, how many new units could you realistically add this year?</p>
-      </div>
+    <div className="animate-fade-in space-y-12">
+      <div className="grid md:grid-cols-2 gap-12">
+        {/* Left: Input */}
+        <div className="space-y-8">
+          <div>
+            <h2 className="text-3xl font-black text-hg-navy mb-4">Portfolio Growth</h2>
+            <p className="text-hg-slate text-lg mb-8">See how adding new properties impacts your bottom line with HostGenius.</p>
 
-      <div className="bg-hg-teal/5 p-8 rounded-3xl border border-hg-teal/20">
-        <NumberInput
-          label="New Listings Goal (Next 12mo)"
-          value={state.newProperties}
-          onChange={(val) => updateState({ newProperties: val })}
-          min={0}
-        />
-
-        {state.newProperties > 0 && (
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-hg-navy/5">
-              <p className="text-xs font-bold text-hg-slate uppercase tracking-wider mb-1">New Monthly Commission</p>
-              <p className="text-3xl font-black text-hg-navy mb-4">{formatCurrency(growth.monthlyRevenue)}</p>
-
-              {/* Breakdown Formula */}
-              <div className="bg-hg-gray/30 rounded-xl p-3 text-xs space-y-2 border border-hg-navy/5">
-                <div className="flex justify-between items-center text-hg-slate">
-                  <span>New Units:</span>
-                  <span className="font-bold text-hg-navy">{state.newProperties}</span>
+            <div className="bg-hg-navy/5 rounded-3xl p-8 border border-hg-navy/10">
+              <label className="block text-hg-navy font-bold text-lg mb-4">New Properties on HostGenius</label>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => updateState({ newProperties: Math.max(0, state.newProperties - 1) })}
+                  className="w-12 h-12 rounded-xl bg-white border border-hg-navy/10 flex items-center justify-center text-hg-navy hover:bg-hg-coral hover:text-white transition-colors text-2xl font-bold pb-1 shadow-sm"
+                >−</button>
+                <div className="flex-1 bg-white border border-hg-navy/10 rounded-xl h-12 flex items-center justify-center font-black text-2xl text-hg-navy shadow-inner shadow-black/5">
+                  {state.newProperties}
                 </div>
-                <div className="flex justify-between items-center text-hg-slate">
-                  <span>Avg Revenue per Listing:</span>
-                  <span className="font-bold text-hg-navy">{formatCurrency(state.avgAnnualRevenue)}</span>
-                </div>
-                <div className="flex justify-between items-center text-hg-slate">
-                  <span>Commission:</span>
-                  <span className="font-bold text-hg-navy">{state.commissionPercent}%</span>
-                </div>
-                <div className="border-t border-hg-navy/10 pt-2 mt-2 flex justify-between items-center font-bold text-hg-teal">
-                  <span>Monthly Commission:</span>
-                  <span>{formatCurrency(growth.monthlyRevenue)}</span>
-                </div>
+                <button
+                  onClick={() => updateState({ newProperties: state.newProperties + 1 })}
+                  className="w-12 h-12 rounded-xl bg-white border border-hg-navy/10 flex items-center justify-center text-hg-navy hover:bg-hg-teal hover:text-white transition-colors text-2xl font-bold pb-1 shadow-sm"
+                >+</button>
               </div>
-            </div>
-            <div className="bg-hg-navy p-6 rounded-2xl shadow-lg shadow-hg-navy/20 text-white flex flex-col justify-center">
-              <div>
-                <p className="text-xs font-bold text-hg-ivory/60 uppercase tracking-wider mb-1">Monthly Net Profit</p>
-                <p className="text-3xl font-black text-hg-teal">+{formatCurrency(growth.monthlyNetProfit)}</p>
-                <p className="text-xs text-hg-ivory/40 mt-2">After HG costs (Tech & Ops)</p>
+              <input
+                type="range"
+                min="0"
+                max="50"
+                value={state.newProperties}
+                onChange={(e) => updateState({ newProperties: parseInt(e.target.value) })}
+                className="w-full mt-6 h-2 bg-hg-navy/10 rounded-lg appearance-none cursor-pointer accent-hg-teal"
+              />
+              <div className="flex justify-between text-xs font-bold text-hg-slate mt-2 uppercase tracking-wide">
+                <span>0</span>
+                <span>50 Properties</span>
               </div>
             </div>
           </div>
-        )}
+
+          <div className="p-6 bg-white border border-hg-navy/10 rounded-2xl shadow-sm">
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-hg-slate font-medium">Avg Annual Revenue</span>
+              <span className="font-bold text-hg-navy">{formatCurrency(state.avgAnnualRevenue)}/unit</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-hg-slate font-medium">Commission Rate</span>
+              <span className="font-bold text-hg-navy">{state.commissionPercent}%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Right: Results Card */}
+        <div className="bg-hg-navy text-white rounded-[2.5rem] p-8 md:p-10 shadow-2xl relative overflow-hidden flex flex-col justify-between h-full">
+          <div className="absolute top-0 right-0 w-80 h-80 bg-hg-teal rounded-full blur-[100px] opacity-20 -mr-20 -mt-20"></div>
+          <div className="absolute bottom-0 left-0 w-64 h-64 bg-hg-coral rounded-full blur-[80px] opacity-10 -ml-10 -mb-10"></div>
+
+          <div className="relative z-10 space-y-8">
+            <div>
+              <h3 className="text-hg-teal font-bold uppercase tracking-widest text-sm mb-6 flex items-center gap-2">
+                <span className="w-8 h-[2px] bg-hg-teal rounded-full"></span>
+                Growth Potential
+              </h3>
+
+              <div className="space-y-2">
+                <div className="text-5xl md:text-6xl font-black text-white tracking-tight leading-none">
+                  +{formatCurrency(result.monthlyRevenue)}
+                </div>
+                <div className="text-hg-ivory/60 font-medium text-lg">New Management Revenue / Month</div>
+              </div>
+            </div>
+
+            <div className="space-y-4 pt-8 border-t border-white/10">
+              <div className="flex justify-between items-center text-lg">
+                <span className="text-hg-ivory/80">{isNetProfitFromTech ? 'Revenue Captured by Savings' : 'Membership Fee'}</span>
+                <span className={`font-bold ${isNetProfitFromTech ? 'text-green-400' : 'text-hg-coral'}`}>
+                  {isNetProfitFromTech ? '+' : '-'}{formatCurrency(Math.abs(state.newProperties * effectiveCostPerDoor))}/mo
+                </span>
+              </div>
+
+              <div className="flex justify-between items-end bg-white/10 p-4 rounded-xl border border-white/5">
+                <div>
+                  <div className="text-sm text-hg-ivory/80 font-medium mb-1">Total Monthly Net Profit</div>
+                  <div className="text-3xl font-black text-white">{formatCurrency(result.monthlyNetProfit)}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm text-hg-teal font-bold mb-1">Annual Value</div>
+                  <div className="text-xl font-bold text-hg-teal">+{formatCurrency(result.annualNetProfit)}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1298,14 +1342,20 @@ const TabMembership = ({ updateState }: { updateState: (s: Partial<CalculatorSta
 
 const TabTech = ({ state, updateState }: { state: CalculatorState; updateState: (s: Partial<CalculatorState>) => void }) => {
   const toggleTool = (targetId: string, isEnabled: boolean) => {
-    const targetToolDef = TOOLS_LIST.find(def => def.id === targetId);
-
+    let toolFound = false;
     const newTools = state.tools.map(t => {
       if (t.id === targetId) {
+        toolFound = true;
         return { ...t, enabled: isEnabled, costPerDoor: isEnabled ? (t.costPerDoor || 0) : 0 };
       }
       return t;
     });
+
+    if (!toolFound) {
+      // If tool wasn't in state (e.g. from old saved state), add it now
+      newTools.push({ id: targetId, enabled: isEnabled, costPerDoor: 0, quantity: 0 });
+    }
+
     updateState({ tools: newTools });
   };
 
@@ -1318,8 +1368,13 @@ const TabTech = ({ state, updateState }: { state: CalculatorState; updateState: 
 
   const BASE_HG_COST = 65;
   const activeTools = state.tools.filter(t => t.enabled);
-  const totalSavings = activeTools.reduce((sum, t) => sum + (t.costPerDoor || 0), 0);
+  // Calculate savings per door (passing 1 listing to get the unit value)
+  const savingsResult = calculateToolSavings(1, state.tools);
+  const totalSavings = savingsResult.monthly;
   const effectiveCost = Math.max(0, BASE_HG_COST - totalSavings);
+
+  const displayTotalSavings = totalSavings.toLocaleString('en-US', { maximumFractionDigits: 2 });
+  const displayEffectiveCost = effectiveCost.toLocaleString('en-US', { maximumFractionDigits: 2 });
 
   return (
     <div className="animate-fade-in space-y-12">
@@ -1344,7 +1399,7 @@ const TabTech = ({ state, updateState }: { state: CalculatorState; updateState: 
                 <div className="text-[10px] font-bold uppercase tracking-widest text-hg-ivory/60 mb-1">Effective HostGenius Cost</div>
                 <div className="flex items-baseline gap-3">
                   <span className={`text-hg-coral line-through text-3xl font-bold decoration-2 opacity-80 ${totalSavings > 0 ? 'inline-block' : 'hidden'}`}>${BASE_HG_COST}</span>
-                  <span className="text-5xl font-black text-white">${effectiveCost}</span>
+                  <span className="text-5xl font-black text-white">${displayEffectiveCost}</span>
                   <span className="text-lg text-hg-ivory/60 font-medium self-end mb-1">/door</span>
                 </div>
               </div>
@@ -1352,47 +1407,101 @@ const TabTech = ({ state, updateState }: { state: CalculatorState; updateState: 
 
             <div className="bg-white/5 border border-white/10 rounded-2xl p-4 text-center w-full md:w-auto min-w-[160px]">
               <div className="text-[10px] font-bold uppercase tracking-widest text-hg-teal mb-1">Total Savings</div>
-              <div className="text-3xl font-black text-hg-teal">${totalSavings}<span className="text-sm font-medium text-hg-teal/60">/door</span></div>
+              <div className="text-3xl font-black text-hg-teal">${displayTotalSavings}<span className="text-sm font-medium text-hg-teal/60">/door</span></div>
             </div>
           </div>
         </div>
 
         <div className="grid gap-4">
-          {TOOLS_LIST.map(tool => {
-            const userTool = state.tools.find(t => t.id === tool.id) || { id: tool.id, enabled: false, costPerDoor: 0 };
-            return (
-              <div key={tool.id} className={`flex flex-col sm:flex-row items-center gap-4 p-4 rounded-xl border transition-all ${userTool.enabled ? 'bg-hg-navy/5 border-hg-navy/30' : 'bg-white border-hg-navy/5'}`}>
-                <div className="flex items-center gap-4 flex-1 w-full">
-                  <input
-                    type="checkbox"
-                    checked={userTool.enabled}
-                    onChange={(e) => toggleTool(tool.id, e.target.checked)}
-                    className="w-6 h-6 rounded border-gray-300 text-hg-navy focus:ring-hg-teal"
-                  />
-                  <div>
-                    <div className="font-bold text-hg-navy">{tool.name}</div>
-                    <div className="text-xs text-hg-slate">{tool.description}</div>
-                  </div>
-                </div>
+          {TOOLS_LIST
+            .filter(t => !t.linkedTo) // Only render root tools first
+            .map(tool => {
+              const userTool = state.tools.find(t => t.id === tool.id) || { id: tool.id, enabled: false, costPerDoor: 0 };
 
-                {userTool.enabled && (
-                  <div className="w-full sm:w-48 animate-fade-in">
-                    <NumberInput
-                      label="Current Cost/Door"
-                      value={userTool.costPerDoor}
-                      onChange={(val) => updateToolCost(tool.id, val)}
-                      prefix="$"
-                    />
+              // Find children
+              const children = TOOLS_LIST.filter(sub => sub.linkedTo === tool.id);
+
+              return (
+                <div key={tool.id} className={`rounded-xl border transition-all overflow-hidden ${userTool.enabled ? 'bg-hg-navy/5 border-hg-navy/30' : 'bg-white border-hg-navy/5'}`}>
+                  {/* MAIN TOOL ROW */}
+                  <div className="flex flex-col sm:flex-row items-center gap-4 p-4">
+                    <div className="flex items-center gap-4 flex-1 w-full">
+                      <input
+                        type="checkbox"
+                        checked={userTool.enabled}
+                        onChange={(e) => toggleTool(tool.id, e.target.checked)}
+                        className="w-6 h-6 rounded border-gray-300 text-hg-navy focus:ring-hg-teal"
+                      />
+                      <div>
+                        <div className="font-bold text-hg-navy">{tool.name}</div>
+                        <div className="text-xs text-hg-slate">{tool.description}</div>
+                      </div>
+                    </div>
+
+                    {userTool.enabled && (
+                      <div className="w-full sm:w-48 animate-fade-in">
+                        <NumberInput
+                          label="Current Cost/Door"
+                          value={userTool.costPerDoor}
+                          onChange={(val) => updateToolCost(tool.id, val)}
+                          prefix="$"
+                        />
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            );
-          })}
+
+                  {/* SUB TOOLS (Conditional) */}
+                  {userTool.enabled && children.length > 0 && (
+                    <div className="bg-hg-navy/5 border-t border-hg-navy/10 p-4 pl-8 sm:pl-16 space-y-4">
+                      {children.map(child => {
+                        const userChild = state.tools.find(t => t.id === child.id) || { id: child.id, enabled: false, costPerDoor: 0, quantity: 0 };
+
+                        return (
+                          <div key={child.id} className="animate-fade-in">
+                            <div className="flex items-center gap-3 mb-3">
+                              <input
+                                type="checkbox"
+                                checked={userChild.enabled}
+                                onChange={(e) => toggleTool(child.id, e.target.checked)}
+                                className="w-5 h-5 rounded border-gray-300 text-hg-teal focus:ring-hg-teal"
+                              />
+                              <span className="font-bold text-sm text-hg-navy">{child.name}</span>
+                            </div>
+
+                            {userChild.enabled && (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pl-8">
+                                <NumberInput
+                                  label={child.isPercentage ? `Your Rate (%)` : `Your Cost / ${child.unitLabel || 'Unit'}`}
+                                  value={userChild.costPerDoor} // Reusing costPerDoor field for "Cost" or "Rate"
+                                  onChange={(val) => updateToolCost(child.id, val)}
+                                  prefix={child.isPercentage ? undefined : "$"}
+                                  suffix={child.isPercentage ? "%" : undefined}
+                                />
+                                <NumberInput
+                                  label={child.quantityLabel || 'Quantity'}
+                                  value={userChild.quantity || 0}
+                                  onChange={(val) => {
+                                    const newTools = state.tools.map(t => t.id === child.id ? { ...t, quantity: val } : t);
+                                    updateState({ tools: newTools });
+                                  }}
+                                  prefix={child.subType === 'percentage_volume' ? '$' : undefined}
+                                />
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
         </div>
       </div>
-
-
     </div>
+
+
+
   );
 };
 
@@ -1600,7 +1709,25 @@ const App = () => {
 
   if (!mounted) return null;
 
-  const TABS = ['Snapshot', 'What You Get', 'Growth', 'HG Membership', 'Tech Stack', 'Summary'];
+  // Calculate Effective Cost for Global Use (Growth Tab needs it)
+  // Re-using logic: Savings = calculateToolSavings(1 listing). Monthly total.
+  const savingsResult = calculateToolSavings(1, state.tools);
+  const effectiveCostPerDoor = Math.max(0, 65 - savingsResult.monthly);
+  // Wait, user request: "Any savings beyond $65 results in additional revenue."
+  // So effective cost CAN be negative.
+  // Example: Savings $80. Cost 65. Effective = 65 - 80 = -15.
+  const realEffectiveCostPerDoor = 65 - savingsResult.monthly;
+
+  // Tabs Reordered: Snapshot -> What You Get -> Membership -> Tech Stack -> Growth -> Summary
+  // Wait, request: "Move Growth to after TechStack"
+  // Order: 
+  // 0: Snapshot
+  // 1: What You Get
+  // 2: Membership (Previously 3)
+  // 3: Tech Stack (Previously 4)
+  // 4: Growth (Previously 2 - Moved Here)
+  // 5: Summary
+  const TABS = ['Snapshot', 'What You Get', 'HG Membership', 'Tech Stack', 'Growth', 'Summary'];
 
   return (
     <div className="min-h-screen bg-hg-ivory font-sans selection:bg-hg-coral selection:text-white flex relative overflow-hidden">
@@ -1694,9 +1821,9 @@ const App = () => {
                     <div className="flex-1 p-6 sm:p-10">
                       {state.currentTab === 0 && <TabSnapshot state={state} updateState={updateState} />}
                       {state.currentTab === 1 && <TabWhatYouGet />}
-                      {state.currentTab === 2 && <TabGrowth state={state} updateState={updateState} />}
-                      {state.currentTab === 3 && <TabMembership updateState={updateState} />}
-                      {state.currentTab === 4 && <TabTech state={state} updateState={updateState} />}
+                      {state.currentTab === 2 && <TabMembership updateState={updateState} />}
+                      {state.currentTab === 3 && <TabTech state={state} updateState={updateState} />}
+                      {state.currentTab === 4 && <TabGrowth state={state} updateState={updateState} effectiveCostPerDoor={realEffectiveCostPerDoor} />}
                       {state.currentTab === 5 && <TabSummary state={state} />}
                     </div>
 

@@ -3,12 +3,19 @@ export interface Tool {
   name: string;
   description: string;
   isPMS: boolean; // Mutually exclusive logic trigger
+  // For sub-options / add-ons
+  linkedTo?: string; // ID of the parent tool (e.g., 'guesty')
+  subType?: 'quantity_based' | 'percentage_volume'; // Triggers specific UI with two inputs
+  unitLabel?: string; // e.g. "Reservation", "Device"
+  quantityLabel?: string; // e.g. "Reservations/Mo", "Devices/Property"
+  isPercentage?: boolean; // If true, the cost input is a percentage
 }
 
 export interface UserToolState {
   id: string;
   enabled: boolean; // "Use through HostGenius"
-  costPerDoor: number; // Current cost entered by user
+  costPerDoor: number; // Current cost entered by user (or Cost per Reservation/Device)
+  quantity?: number; // Multiplier (Reservations/Mo or Devices/Property) - Default 0
 }
 
 export interface OperationalTask {
@@ -44,11 +51,19 @@ export interface CalculatorState {
 
 export const TOOLS_LIST: Tool[] = [
   { id: 'hostaway', name: 'Hostaway (PMS)', description: 'Property Management System', isPMS: true },
+  { id: 'truvi', name: 'Damage Waivers', description: 'Protection & Screening', isPMS: false, linkedTo: 'hostaway', subType: 'quantity_based', unitLabel: 'Reservation', quantityLabel: 'Reservations/Mo' },
+
   { id: 'guesty', name: 'Guesty (PMS)', description: 'Property Management System', isPMS: true },
+  { id: 'guestyshield', name: 'GuestyShield', description: 'Protection & Insurance', isPMS: false, linkedTo: 'guesty', subType: 'quantity_based', unitLabel: 'Reservation', quantityLabel: 'Reservations/Mo' },
+  { id: 'guestypay', name: 'GuestyPay', description: 'Payment Processing', isPMS: false, linkedTo: 'guesty', subType: 'percentage_volume', unitLabel: 'Transaction Volume', quantityLabel: 'Processed $/Door/Mo', isPercentage: true },
+
   { id: 'pricelabs', name: 'PriceLabs', description: 'Dynamic Pricing', isPMS: false },
-  { id: 'breezeway', name: 'Breezeway', description: 'Operations & Safety', isPMS: false },
+  { id: 'breezeway', name: 'Breezeway', description: 'Cleaning Operations', isPMS: false },
   { id: 'enso', name: 'Enso', description: 'Guest Experience / Upsells', isPMS: false },
-  { id: 'suiteop', name: 'SuiteOp', description: 'Smart Device Management', isPMS: false },
+
+  { id: 'suiteop', name: 'SuiteOp', description: 'Operations & Guest Experience', isPMS: false },
+  { id: 'suiteop_devices', name: 'SuiteOp Device Mgmt', description: 'Smart Locks & Thermostats', isPMS: false, linkedTo: 'suiteop', subType: 'quantity_based', unitLabel: 'Device', quantityLabel: 'Devices/Property' },
+
   { id: 'conduitai', name: 'ConduitAI', description: 'AI Communication', isPMS: false },
 ];
 
@@ -69,7 +84,7 @@ export const INITIAL_STATE: CalculatorState = {
   // Time defaults
   opsTasks: OPS_TASK_LIST.map(t => ({ id: t.id, hours: 0 })), // Default 0 hours per task/week
 
-  tools: TOOLS_LIST.map(t => ({ id: t.id, enabled: false, costPerDoor: 0 })),
+  tools: TOOLS_LIST.map(t => ({ id: t.id, enabled: false, costPerDoor: 0, quantity: 0 })),
   newProperties: 0,
   currentTab: 0
 };
