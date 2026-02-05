@@ -151,23 +151,23 @@ const HG_TOOL_RATES: Record<string, number> = {
   guestyshield: 40.00, // Per reservation
   truvi: 30.00, // Per reservation
   suiteop_devices: 2.50, // Per device
-  guestypay: 2.50, // Percentage
+  guestypay: 2.6, // Percentage
 };
 
-import { TOOLS_LIST } from './types'; // Import to check subType
+import { TOOLS_LIST, CustomTool } from './types'; // Import to check subType
 
-export const calculateToolSavings = (listings: number, userTools: UserToolState[]) => {
+export const calculateToolSavings = (listings: number, userTools: UserToolState[], customTools: CustomTool[] = []) => {
   let monthlyTotal = 0;
-  const itemized = userTools.map(t => {
+  const itemized: { id: string; monthly: number; annual: number }[] = [];
+
+  // 1. Process Standard Tools
+  userTools.forEach(t => {
     let monthly = 0;
 
     if (t.enabled) {
       // Find tool definition to check logic type
       const def = TOOLS_LIST.find(d => d.id === t.id);
 
-      // Logic split:
-      // Logic split:
-      // 1. Quantity Based (Rates per reservation/device)
       // Logic split:
       // 1. Quantity Based (Rates per reservation/device)
       if (def?.subType === 'quantity_based') {
@@ -190,13 +190,13 @@ export const calculateToolSavings = (listings: number, userTools: UserToolState[
         const savingsPerDoor = (rateDiff / 100) * volumePerDoor;
         monthly = listings * savingsPerDoor;
       }
-      // 2. Standard Tech Tools (Rates per door)
+      // 3. Standard Tech Tools (Rates per door)
       else if (HG_TOOL_RATES[t.id] !== undefined) {
         // Ensure we don't return negative savings.
         const savingsPerDoor = Math.max(0, t.costPerDoor - HG_TOOL_RATES[t.id]);
         monthly = listings * savingsPerDoor;
       }
-      // 3. PMS / Default (Full Cost Savings)
+      // 4. PMS / Default (Full Cost Savings)
       else {
         monthly = listings * t.costPerDoor;
       }
@@ -204,11 +204,39 @@ export const calculateToolSavings = (listings: number, userTools: UserToolState[
 
     if (t.enabled) monthlyTotal += monthly;
 
-    return {
+    itemized.push({
       id: t.id,
       monthly,
       annual: monthly * 12
-    };
+    });
+  });
+
+  // 2. Process Custom Tools
+  customTools.forEach(ct => {
+    // Logic: Savings = (UserCost - HG_Replacement_Cost) * Listings
+    // Find HG rate for the replacement tool
+    const replacementId = ct.replacedById;
+    let replacementRate = 0;
+
+    // Check if replacement is a known tool with a rate
+    if (replacementId && HG_TOOL_RATES[replacementId] !== undefined) {
+      replacementRate = HG_TOOL_RATES[replacementId];
+    }
+    // If replacement is PMS/Hostaway (main grouping), typically rate is 0/included? 
+    // Actually HG_TOOL_RATES might not include 'hostaway' if it's treated specially.
+    // But logically, if it's "replaced by HostGenius", cost is 0 (as included in $65).
+    // So default replacementRate 0 is usually correct for "included" tools.
+
+    const savingsPerDoor = Math.max(0, ct.costPerDoor - replacementRate);
+    const monthly = listings * savingsPerDoor;
+
+    monthlyTotal += monthly;
+
+    itemized.push({
+      id: ct.id,
+      monthly,
+      annual: monthly * 12
+    });
   });
 
   return {

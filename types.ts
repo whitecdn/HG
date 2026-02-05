@@ -29,6 +29,13 @@ export interface UserTaskState {
   hours: number;
 }
 
+export interface CustomTool {
+  id: string;
+  name: string;
+  costPerDoor: number;
+  replacedById: string; // ID of the tool in TOOLS_LIST
+}
+
 export interface CalculatorState {
   // Tab 1: Snapshot (Portfolio + Time)
   companyName: string;
@@ -37,10 +44,17 @@ export interface CalculatorState {
   commissionPercent: number;
 
   // Time Inputs (Task based)
+  // Powerups State
+  sdrAppointments: number;
+  sdrCloseRate: number;
+  revMaxLift: number;
+
+  // Ops Tasks
   opsTasks: UserTaskState[];
 
   // Tab 4: Tools
   tools: UserToolState[];
+  customTools: CustomTool[];
 
   // Tab 3: Growth
   newProperties: number;
@@ -82,9 +96,16 @@ export const INITIAL_STATE: CalculatorState = {
   commissionPercent: 20,
 
   // Time defaults
+  // Time defaults
   opsTasks: OPS_TASK_LIST.map(t => ({ id: t.id, hours: 0 })), // Default 0 hours per task/week
 
+  // Powerups Defaults
+  sdrAppointments: 5,
+  sdrCloseRate: 20,
+  revMaxLift: 5,
+
   tools: TOOLS_LIST.map(t => ({ id: t.id, enabled: false, costPerDoor: 0, quantity: 0 })),
+  customTools: [],
   newProperties: 0,
   currentTab: 0
 };

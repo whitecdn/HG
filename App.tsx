@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { TOOLS_LIST, OPS_TASK_LIST, INITIAL_STATE, CalculatorState } from './types';
+import { TOOLS_LIST, OPS_TASK_LIST, INITIAL_STATE, CalculatorState, CustomTool } from './types';
 
 import { NumberInput, TextInput } from './components/Input';
 import { SummarySidebar } from './components/SummarySidebar';
@@ -332,9 +332,172 @@ const Logo = () => (
   </div>
 );
 
-type ViewMode = 'calculator' | 'community' | 'dashboard' | 'admin';
+type ViewMode = 'calculator' | 'community' | 'dashboard' | 'admin' | 'powerups';
 
 // --- MAIN NAV SIDEBAR ---
+
+const PowerupsView = ({ state, updateState }: { state: CalculatorState, updateState: (s: Partial<CalculatorState>) => void }) => {
+  const [activeTab, setActiveTab] = useState<'sdr' | 'revmax' | 'acquisitions' | 'guest'>('sdr');
+
+  // SDR Logic
+  // 1 Deal = Avg Annual Rev * Commission
+  const sdrDealsPerMonth = state.sdrAppointments * (state.sdrCloseRate / 100);
+  const sdrRevPerDeal = state.avgAnnualRevenue * (state.commissionPercent / 100);
+  const sdrTotalRevMonthly = (sdrDealsPerMonth * sdrRevPerDeal) / 12;
+  const sdrCostPerDeal = 2000;
+  const sdrTotalCost = sdrDealsPerMonth * sdrCostPerDeal;
+  const sdrNetProfit = sdrTotalRevMonthly - sdrTotalCost; // Note: Rev is recurring, Cost is one-time (CAC). Comparison is tricky but let's show monthly value potential vs CAC.
+
+  // Rev Max Logic
+  // Uplift based on total revenue
+  const currentTotalAnnualRev = state.listings * state.avgAnnualRevenue;
+  const revMaxUpliftAnnual = currentTotalAnnualRev * (state.revMaxLift / 100);
+  const revMaxUpliftMonthly = revMaxUpliftAnnual / 12;
+  const revMaxCostMonthly = state.listings * 55;
+  const revMaxNetMonthly = revMaxUpliftMonthly - revMaxCostMonthly;
+
+  const TABS = [
+    { id: 'sdr', label: 'Homeowner SDR' },
+    { id: 'revmax', label: 'Revenue Management' },
+    { id: 'acquisitions', label: 'Portfolio Acquisitions' },
+    { id: 'guest', label: '24/7 Guest Support' }
+  ];
+
+  return (
+    <div className="max-w-[1800px] mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="mb-10">
+        <h1 className="text-4xl font-black text-hg-navy mb-4">Powerups</h1>
+        <p className="text-xl text-hg-slate">Supercharge your growth with specialized add-ons.</p>
+      </div>
+
+      <div className="flex gap-4 mb-8 overflow-x-auto pb-2">
+        {TABS.map(tab => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`px-6 py-3 rounded-xl font-bold transition-all whitespace-nowrap ${activeTab === tab.id ? 'bg-hg-navy text-white shadow-lg shadow-hg-navy/20' : 'bg-white text-hg-slate hover:bg-hg-gray/50 hover:text-hg-navy'}`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <div className="bg-white rounded-[2rem] shadow-soft border border-hg-navy/5 min-h-[600px] p-8 md:p-12 relative overflow-hidden">
+        {/* Background Decor */}
+        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-hg-coral/5 to-hg-teal/5 rounded-full blur-3xl -mr-[100px] -mt-[100px] pointer-events-none"></div>
+
+        {activeTab === 'sdr' && (
+          <div className="animate-fade-in grid lg:grid-cols-2 gap-12 relative z-10">
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-3xl font-black text-hg-navy mb-4">Homeowner SDR</h2>
+                <p className="text-hg-slate text-lg">We book the appointments. You close the deals. Scale your inventory without the cold calling.</p>
+              </div>
+
+              <div className="bg-hg-gray/10 rounded-3xl p-8 border border-hg-navy/5 space-y-6">
+                <NumberInput
+                  label="Appointments / Month"
+                  value={state.sdrAppointments}
+                  onChange={(v) => updateState({ sdrAppointments: v })}
+                />
+                <NumberInput
+                  label="Your Close Rate (%)"
+                  value={state.sdrCloseRate}
+                  onChange={(v) => updateState({ sdrCloseRate: v })}
+                  suffix="%"
+                />
+              </div>
+            </div>
+
+            <div className="bg-hg-navy text-white rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden flex flex-col justify-between">
+              <div className="absolute bottom-0 right-0 w-64 h-64 bg-hg-coral rounded-full blur-[80px] opacity-20 -mr-10 -mb-10"></div>
+
+              <div className="relative z-10 space-y-8">
+                <div>
+                  <div className="text-sm font-bold uppercase tracking-widest text-hg-teal mb-2">Projected Pipeline Value</div>
+                  <div className="text-5xl font-black text-white">+{formatCurrency(sdrTotalRevMonthly)}<span className="text-lg text-hg-ivory/60 font-medium">/mo</span></div>
+                  <p className="text-hg-ivory/60 mt-2 text-sm">Recurring revenue generated from {sdrDealsPerMonth.toFixed(1)} closed deals per month.</p>
+                </div>
+
+                <div className="bg-white/10 rounded-xl p-6 border border-white/5 backdrop-blur-sm">
+                  <div className="flex justify-between items-center mb-2">
+                    <span className="font-bold text-hg-ivory">Acquisition Cost</span>
+                    <span className="font-bold text-white uppercase tracking-wider">$2,000 / deal</span>
+                  </div>
+                  <p className="text-xs text-hg-ivory/50">Pay only for results. Includes lead sourcing, nurturing, and appointment setting.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'revmax' && (
+          <div className="animate-fade-in grid lg:grid-cols-2 gap-12 relative z-10">
+            <div className="space-y-8">
+              <div>
+                <h2 className="text-3xl font-black text-hg-navy mb-4">Revenue Management</h2>
+                <p className="text-hg-slate text-lg">Expert pricing strategies to squeeze every dollar out of your existing portfolio.</p>
+              </div>
+
+              <div className="bg-hg-gray/10 rounded-3xl p-8 border border-hg-navy/5">
+                <label className="block text-hg-navy font-bold text-lg mb-4">Revenue Uplift Target</label>
+                <div className="flex items-end gap-3 mb-6">
+                  <span className="text-5xl font-black text-hg-coral">{state.revMaxLift}%</span>
+                  <span className="text-hg-slate font-bold mb-2">Increase</span>
+                </div>
+                <input
+                  type="range"
+                  min="1"
+                  max="20"
+                  value={state.revMaxLift}
+                  onChange={(e) => updateState({ revMaxLift: parseInt(e.target.value) })}
+                  className="w-full h-2 bg-hg-navy/10 rounded-lg appearance-none cursor-pointer accent-hg-coral"
+                />
+                <div className="flex justify-between text-xs font-bold text-hg-slate mt-2 uppercase tracking-wide">
+                  <span>1% Conservative</span>
+                  <span>20% Aggressive</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-hg-navy text-white rounded-[2.5rem] p-10 shadow-2xl relative overflow-hidden flex flex-col justify-center">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-hg-teal rounded-full blur-[80px] opacity-20 -mr-10 -mt-10"></div>
+
+              <div className="relative z-10 text-center space-y-8">
+                <div>
+                  <div className="text-sm font-bold uppercase tracking-widest text-hg-teal mb-2">Monthly Revenue Uplift</div>
+                  <div className="text-6xl font-black text-white">+{formatCurrency(revMaxUpliftMonthly)}</div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-left">
+                  <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                    <div className="text-xs text-hg-ivory/60 uppercase tracking-wider mb-1">Service Cost</div>
+                    <div className="text-xl font-bold text-white">$55<span className="text-sm font-medium text-hg-ivory/60">/door</span></div>
+                  </div>
+                  <div className="bg-white/20 p-4 rounded-xl border border-white/20">
+                    <div className="text-xs text-hg-ivory/80 uppercase tracking-wider mb-1">Net Profit Gain</div>
+                    <div className="text-xl font-bold text-hg-teal">+{formatCurrency(revMaxNetMonthly)}<span className="text-sm font-medium text-white/60">/mo</span></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {(activeTab === 'acquisitions' || activeTab === 'guest') && (
+          <div className="animate-fade-in flex flex-col items-center justify-center h-full min-h-[400px] text-center max-w-lg mx-auto">
+            <div className="w-20 h-20 bg-hg-gray/20 rounded-full flex items-center justify-center mb-6 text-hg-slate mb-6">
+              <svg className="w-10 h-10 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" /></svg>
+            </div>
+            <h2 className="text-3xl font-black text-hg-navy mb-4">Coming Soon</h2>
+            <p className="text-hg-slate text-lg">We are finalizing the framework for {activeTab === 'acquisitions' ? 'large-scale portfolio acquisitions' : '24/7 guest communication support'}. Check back soon for updates.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 const MainNavigation = ({ currentView, setView, state }: { currentView: ViewMode, setView: (v: ViewMode) => void, state?: CalculatorState }) => {
   return (
     <div className="hidden lg:flex flex-col w-64 bg-hg-navy h-screen fixed left-0 top-0 z-50 shadow-2xl">
@@ -363,7 +526,17 @@ const MainNavigation = ({ currentView, setView, state }: { currentView: ViewMode
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 4h6m-6 4h6M6 7a2 2 0 012-2h12a2 2 0 012 2v10a2 2 0 01-2 2H8a2 2 0 01-2-2V7z" />
           </svg>
-          <span className="font-bold text-sm tracking-wide">Calculator</span>
+          <span className="font-bold text-sm tracking-wide">Core Membership</span>
+        </button>
+
+        <button
+          onClick={() => setView('powerups')}
+          className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 group ${currentView === 'powerups' ? 'bg-hg-coral text-white shadow-lg shadow-hg-coral/20' : 'text-hg-ivory/60 hover:bg-white/5 hover:text-white'}`}
+        >
+          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span className="font-bold text-sm tracking-wide">Powerups</span>
         </button>
 
         {false && (
@@ -1142,66 +1315,198 @@ const TabSnapshot = ({ state, updateState }: { state: CalculatorState; updateSta
   );
 };
 
-const TabWhatYouGet = () => {
-  const [expandedSections, setExpandedSections] = useState<string[]>([]);
+const TabWhatYouGet = ({ state, updateState }: { state: CalculatorState; updateState: (s: Partial<CalculatorState>) => void }) => {
+  // Calculations for "Your Numbers" preview
+  const savingsResult = calculateToolSavings(1, state.tools, state.customTools);
+  const growthResult = calculateGrowthUpside(state.newProperties, state.avgAnnualRevenue, state.commissionPercent);
 
-  const toggleSection = (name: string) => {
-    setExpandedSections(prev =>
-      prev.includes(name)
-        ? prev.filter(s => s !== name)
-        : [...prev, name]
-    );
-  };
+  // Total projected value (Growth Only for now as per Summary logic)
+  const totalMonthlyValue = growthResult.monthlyNetProfit;
 
   return (
-    <div className="animate-fade-in space-y-10">
-      <div>
-        <h2 className="text-3xl font-black text-hg-navy mb-4">The Partnership Stack</h2>
-        <p className="text-hg-slate text-lg">Everything you get to scale your operations without scaling your headaches.</p>
+    <div className="animate-fade-in space-y-20">
+      {/* SECTION 1: HERO */}
+      <div className="relative rounded-[3rem] overflow-hidden bg-hg-navy text-white p-10 md:p-16 text-center shadow-2xl border border-white/5 group">
+        {/* Dynamic Backgrounds */}
+        <div className="absolute top-0 right-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[#0B354E] via-hg-navy to-hg-navy opacity-80"></div>
+        <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-hg-teal/20 rounded-full blur-[120px] animate-pulse"></div>
+        <div className="absolute bottom-[-20%] left-[-10%] w-[500px] h-[500px] bg-hg-coral/10 rounded-full blur-[100px] animate-pulse delay-700"></div>
+
+        {/* Noise Texture Overlay */}
+        <div className="absolute inset-0 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay"></div>
+
+        <div className="relative z-10 max-w-4xl mx-auto space-y-12">
+          <div className="space-y-6">
+            <div className="inline-block px-4 py-1.5 rounded-full bg-white/10 border border-white/10 backdrop-blur-md text-xs font-bold tracking-widest uppercase text-hg-teal mb-4 shadow-sm">
+              The Partnership
+            </div>
+            <h2 className="text-4xl md:text-6xl font-black leading-tight tracking-tight drop-shadow-sm">
+              HostGenius is the <span className="text-hg-teal">execution-first</span> private network for boutique STR operators.
+            </h2>
+            <p className="text-xl md:text-2xl text-hg-ivory/80 leading-relaxed max-w-2xl mx-auto font-light">
+              Most groups share ideas. We turn ideas into <span className="text-white font-medium">implementation</span>, <span className="text-white font-medium">systems</span>, and <span className="text-white font-medium">measurable outcomes</span>.
+            </p>
+          </div>
+
+          <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-8 border border-white/5 inline-block text-left mx-auto">
+            <ul className="space-y-5">
+              {[
+                "Execution beats information. We help you install the playbooks, not just talk about them.",
+                "Operate like a CEO: dashboards, targets, accountability, and leverage.",
+                "Turn 5-year goals into 2-year goals with compounding systems and shared leverage."
+              ].map((item, i) => (
+                <li key={i} className="flex items-start gap-4 text-hg-ivory/90 text-lg">
+                  <div className="mt-1 p-1 bg-hg-teal/20 rounded-full">
+                    <svg className="w-4 h-4 text-hg-teal shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="grid sm:grid-cols-3 gap-6 pt-4 text-left">
+            {[
+              { title: "Owner Operating System", body: "One place for owner performance, retention risk, and growth levers." },
+              { title: "Private Network", body: "Operators sharing what’s working right now, with proof and benchmarks." },
+              { title: "Elite Services", body: "VP-level Ops and Revenue Management aligned to your targets." }
+            ].map((card, i) => (
+              <div key={i} className="bg-gradient-to-b from-white/10 to-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-6 hover:translate-y-[-4px] transition-transform duration-300 shadow-lg hover:shadow-xl hover:border-hg-teal/30 group/card">
+                <h4 className="font-bold text-hg-teal text-sm uppercase tracking-wide mb-3 group-hover/card:text-white transition-colors">{card.title}</h4>
+                <p className="text-sm text-hg-ivory/70 leading-relaxed font-light">{card.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
-      <div className="space-y-8">
-        {BENEFITS_DATA.map((category) => (
-          <div key={category.name} className="border-b border-hg-navy/10 last:border-0 pb-8 last:pb-0">
-            <button
-              onClick={() => toggleSection(category.name)}
-              className="w-full flex justify-between items-center group py-2 text-left"
-            >
-              <h3 className="text-xl font-bold text-hg-teal uppercase tracking-widest group-hover:text-hg-navy transition-colors">{category.name}</h3>
-              <div className={`p-2 rounded-full transition-all duration-300 ${expandedSections.includes(category.name) ? 'bg-hg-teal text-white rotate-180' : 'bg-hg-gray/50 text-hg-slate group-hover:bg-hg-navy group-hover:text-white'}`}>
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </div>
-            </button>
+      {/* SECTION 2: PROBLEMS */}
+      <div className="bg-hg-ivory rounded-[3rem] p-10 md:p-16 border border-hg-navy/5">
+        <h3 className="text-center text-3xl md:text-4xl font-black text-hg-navy mb-16 tracking-tight">The Problems We Solve</h3>
+        <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          {[
+            { title: "Owner growth is slow and inconsistent", icon: "📉", looks: "New owners come from luck, referrals, or sporadic marketing.", costs: "Hard to forecast growth. Hard to build a sellable asset. Hard to step away." },
+            { title: "You’re stuck in the business", icon: "⚙️", looks: "You’re too busy getting your hands dirty with daily tasks that don’t drive growth.", costs: "No time to build systems, lead a team, or make real CEO-level decisions." },
+            { title: "Too many roles, not enough specialists", icon: "🤹", looks: "Pricing, CX, ops, hiring, homeowner comms, financials, sales, marketing.", costs: "You either guess, or you learn the hard way and pay for it in churn and margin." },
+            { title: "You need to level up your room", icon: "🚀", looks: "You can’t ask friends or family how to scale a vacation rental business.", costs: "Staying the smartest person in the room caps your growth." }
+          ].map((card, i) => (
+            <div key={i} className="bg-white rounded-[2rem] p-8 border border-hg-navy/5 shadow-lg hover:shadow-2xl hover:shadow-hg-navy/10 transition-all duration-300 hover:-translate-y-1 group relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-hg-teal/5 rounded-full blur-[40px] opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <div className="text-5xl mb-6 bg-hg-navy/5 w-20 h-20 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">{card.icon}</div>
+              <h4 className="text-2xl font-bold text-hg-navy mb-8 group-hover:text-hg-teal transition-colors">{card.title}</h4>
 
-            <div className={`grid transition-all duration-500 ease-in-out overflow-hidden ${expandedSections.includes(category.name) ? 'grid-rows-[1fr] opacity-100 mt-6' : 'grid-rows-[0fr] opacity-0 mt-0'}`}>
-              <div className="overflow-hidden">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {category.items.map((item, idx) => (
-                    <div key={idx} className="bg-hg-gray/30 rounded-2xl p-6 border border-hg-navy/5 hover:border-hg-navy/20 transition-colors">
-                      <div className="flex justify-between items-start mb-3">
-                        <h4 className="font-bold text-hg-navy text-lg">{item.title}</h4>
-                        <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${item.badge === 'Core' ? 'bg-hg-navy text-white' :
-                          item.badge === 'Add-on' ? 'bg-hg-coral text-white' :
-                            'bg-hg-teal/10 text-hg-teal'
-                          }`}>{item.badge}</span>
-                      </div>
-                      <ul className="space-y-2">
-                        {item.bullets.map((bullet, bIdx) => (
-                          <li key={bIdx} className="text-sm text-hg-slate leading-relaxed flex items-start gap-2">
-                            <span className="text-hg-teal mt-1.5">•</span>
-                            <span>{bullet}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
+              <div className="grid gap-6">
+                <div className="relative pl-6 border-l-2 border-hg-navy/10 group-hover:border-hg-navy/30 transition-colors">
+                  <div className="text-xs font-bold text-hg-slate uppercase tracking-wider mb-2">What it looks like</div>
+                  <p className="text-hg-navy/80 font-medium leading-relaxed">{card.looks}</p>
+                </div>
+                <div className="relative pl-6 border-l-2 border-hg-coral/20 group-hover:border-hg-coral/50 transition-colors">
+                  <div className="text-xs font-bold text-hg-coral uppercase tracking-wider mb-2">What it costs you</div>
+                  <p className="text-hg-navy/80 font-medium leading-relaxed">{card.costs}</p>
                 </div>
               </div>
             </div>
+          ))}
+        </div>
+        <p className="text-center text-hg-slate font-bold mt-12 uppercase tracking-widest text-sm opacity-60">The fastest path is being a small fish in a big room.</p>
+      </div>
+
+      {/* SECTION 3: HOW IT WORKS */}
+      <div className="relative overflow-hidden bg-hg-navy text-white rounded-[3rem] p-10 md:p-20 border border-white/5 shadow-2xl isolate">
+        {/* Background Effect */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-[#114b6e] via-hg-navy to-hg-navy opacity-60"></div>
+        <div className="absolute inset-0 opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-overlay"></div>
+
+        <div className="relative z-10">
+          <div className="text-center mb-16">
+            <h3 className="text-4xl md:text-5xl font-black text-white mb-6">How It Works</h3>
+            <p className="text-hg-ivory/60 text-lg max-w-xl mx-auto">A simple, repeatable process to transform your operation.</p>
           </div>
-        ))}
+
+          <div className="grid md:grid-cols-3 gap-12 relative max-w-5xl mx-auto">
+            {/* Visual Connector */}
+            <div className="hidden md:block absolute top-[40px] left-[15%] right-[15%] h-[2px] bg-gradient-to-r from-transparent via-hg-teal/30 to-transparent z-0"></div>
+
+            {[
+              { title: "Set the scoreboard", body: "Define goals, install tracking, identify bottlenecks." },
+              { title: "Install systems", body: "Deploy playbooks across ops, owner retention, and growth." },
+              { title: "Compound results", body: "Weekly momentum plus community benchmarks and expert oversight." }
+            ].map((step, i) => (
+              <div key={i} className="relative z-10 flex flex-col items-center text-center group">
+                <div className="w-20 h-20 rounded-full bg-hg-navy border-4 border-hg-teal/20 text-white flex items-center justify-center font-black text-2xl shadow-[0_0_30px_rgba(45,212,191,0.15)] mb-8 z-10 group-hover:scale-110 group-hover:border-hg-teal transition-all duration-300">
+                  <span className="text-hg-teal group-hover:text-white transition-colors">{i + 1}</span>
+                </div>
+                <h5 className="font-bold text-white text-2xl mb-4 group-hover:text-hg-teal transition-colors">{step.title}</h5>
+                <p className="text-hg-ivory/60 leading-relaxed max-w-xs">{step.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION 4: HOW WE HELP (Split & Refined) */}
+      <div className="bg-hg-teal/5 rounded-[3rem] p-10 md:p-14 border border-hg-teal/10 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-hg-teal/10 rounded-full blur-[100px]"></div>
+        <div className="relative z-10">
+          <div className="text-center max-w-3xl mx-auto mb-16">
+            <h3 className="text-3xl md:text-4xl font-black text-hg-navy mb-4">How we help you hit your goals</h3>
+            <p className="text-lg text-hg-slate">We combine your data, community benchmarks, and fractional executive horsepower so you execute faster.</p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-8 lg:gap-12 max-w-5xl mx-auto">
+            {[
+              { title: "Data, numbers, and clear targets", bullets: ["Retention, margin, and time scoreboard.", "Know exactly what moves the needle."] },
+              { title: "Collective intelligence that compounds", bullets: ["Insights you can’t find on YouTube.", "Direct access to top operators."] },
+              { title: "VP Ops + VP Revenue Management", bullets: ["Data-driven planning and outcomes.", "SOPs, cadence, and accountability."] },
+              { title: "Economies of scale", bullets: ["Collective buying power.", "Better vendors, better pricing, less waste."] }
+            ].map((pillar, i) => (
+              <div key={i} className="bg-white rounded-2xl p-8 shadow-sm border border-hg-navy/5 hover:shadow-md transition-shadow group">
+                <h4 className="text-xl font-bold text-hg-teal mb-4 flex items-center gap-3">
+                  <span className="w-10 h-10 rounded-lg bg-hg-teal/10 flex items-center justify-center text-hg-teal group-hover:bg-hg-teal group-hover:text-white transition-colors shrink-0">
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                  </span>
+                  {pillar.title}
+                </h4>
+                <div className="space-y-3 pl-[52px]">
+                  {pillar.bullets.map((b, bi) => (
+                    <p key={bi} className="text-hg-slate text-sm leading-relaxed relative flex items-start gap-2">
+                      <span className="text-hg-teal mt-1.5 w-1.5 h-1.5 rounded-full bg-hg-teal/40 shrink-0"></span>
+                      {b}
+                    </p>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION 5: AUDIENCE (The Invitation) */}
+      <div className="relative rounded-[2.5rem] p-[3px] bg-gradient-to-r from-hg-teal via-hg-navy to-hg-teal overflow-hidden">
+        <div className="bg-white rounded-[2.3rem] p-10 md:p-14 text-center relative overflow-hidden">
+          {/* Decorative */}
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-1/2 bg-gradient-to-b from-hg-teal/5 to-transparent"></div>
+
+          <div className="relative z-10 max-w-4xl mx-auto">
+            <h4 className="font-bold text-hg-teal uppercase tracking-widest mb-8 text-sm">The Invitation</h4>
+            <h3 className="text-3xl md:text-5xl font-black text-hg-navy mb-12">This is for you if...</h3>
+
+            <div className="grid md:grid-cols-3 gap-6 text-left">
+              {[
+                "You want predictable owner growth, not luck.",
+                "You want to step into CEO mode and build a real business asset.",
+                "You want to be surrounded by operators who are ahead of you."
+              ].map((item, i) => (
+                <div key={i} className="flex flex-col items-center text-center p-6 rounded-2xl hover:bg-hg-ivory/50 transition-colors">
+                  <div className="w-12 h-12 rounded-full bg-hg-navy text-white flex items-center justify-center shrink-0 mb-6 shadow-xl shadow-hg-navy/10">
+                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                  <span className="text-hg-navy font-bold text-lg leading-tight">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -1366,15 +1671,47 @@ const TabTech = ({ state, updateState }: { state: CalculatorState; updateState: 
 
 
 
+  const [newCustomToolName, setNewCustomToolName] = useState('');
+  const [newCustomToolCost, setNewCustomToolCost] = useState('');
+  const [newCustomToolReplacement, setNewCustomToolReplacement] = useState('');
+
+  const addCustomTool = () => {
+    if (!newCustomToolName || !newCustomToolCost) return;
+
+    const newTool: CustomTool = {
+      id: 'custom_' + Math.random().toString(36).substr(2, 9),
+      name: newCustomToolName,
+      costPerDoor: parseFloat(newCustomToolCost),
+      replacedById: newCustomToolReplacement
+    };
+
+    updateState({ customTools: [...(state.customTools || []), newTool] });
+    setNewCustomToolName('');
+    setNewCustomToolCost('');
+    setNewCustomToolReplacement('');
+  };
+
+  const removeCustomTool = (id: string) => {
+    updateState({ customTools: (state.customTools || []).filter(t => t.id !== id) });
+  };
+
   const BASE_HG_COST = 65;
   const activeTools = state.tools.filter(t => t.enabled);
   // Calculate savings per door (passing 1 listing to get the unit value)
-  const savingsResult = calculateToolSavings(1, state.tools);
+  // Include custom tools
+  const savingsResult = calculateToolSavings(1, state.tools, state.customTools);
   const totalSavings = savingsResult.monthly;
-  const effectiveCost = Math.max(0, BASE_HG_COST - totalSavings);
+  const netImpact = totalSavings - BASE_HG_COST;
 
   const displayTotalSavings = totalSavings.toLocaleString('en-US', { maximumFractionDigits: 2 });
-  const displayEffectiveCost = effectiveCost.toLocaleString('en-US', { maximumFractionDigits: 2 });
+
+  // Format Net Impact 
+  // If positive (Savings > Cost): Show "+$XX" in Green
+  // If negative (Cost > Savings): Show "$XX" (No minus) in White
+  const isProfit = netImpact > 0;
+  // Note: We use Math.ceil or similar if we want nice numbers, but keeping precision for now. 
+  // Actually usually we want 2 decimals or 0 depending on preference. sticking to 2.
+  const displayNetImpactValue = (isProfit ? '+' : '') + '$' + Math.abs(netImpact).toLocaleString('en-US', { maximumFractionDigits: 2 });
 
   return (
     <div className="animate-fade-in space-y-12">
@@ -1396,10 +1733,10 @@ const TabTech = ({ state, updateState }: { state: CalculatorState; updateState: 
               </div>
 
               <div>
-                <div className="text-[10px] font-bold uppercase tracking-widest text-hg-ivory/60 mb-1">Effective HostGenius Cost</div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-hg-ivory/60 mb-1">{isProfit ? 'HostGenius Net Impact' : 'HostGenius Net Cost'}</div>
                 <div className="flex items-baseline gap-3">
-                  <span className={`text-hg-coral line-through text-3xl font-bold decoration-2 opacity-80 ${totalSavings > 0 ? 'inline-block' : 'hidden'}`}>${BASE_HG_COST}</span>
-                  <span className="text-5xl font-black text-white">${displayEffectiveCost}</span>
+                  <span className={`text-hg-coral/60 line-through text-2xl font-bold decoration-2 ${totalSavings > 0 ? 'inline-block' : 'hidden'}`}>${BASE_HG_COST}</span>
+                  <span className={`text-5xl font-black ${isProfit ? 'text-hg-teal' : 'text-white'}`}>{displayNetImpactValue}</span>
                   <span className="text-lg text-hg-ivory/60 font-medium self-end mb-1">/door</span>
                 </div>
               </div>
@@ -1412,7 +1749,7 @@ const TabTech = ({ state, updateState }: { state: CalculatorState; updateState: 
           </div>
         </div>
 
-        <div className="grid gap-4">
+        <div className="grid gap-4 mb-8">
           {TOOLS_LIST
             .filter(t => !t.linkedTo) // Only render root tools first
             .map(tool => {
@@ -1497,6 +1834,70 @@ const TabTech = ({ state, updateState }: { state: CalculatorState; updateState: 
               );
             })}
         </div>
+
+        {/* CUSTOM TOOLS SECTION */}
+        <div className="bg-white border-2 border-dashed border-hg-navy/10 rounded-xl p-6">
+          <h3 className="font-bold text-hg-navy mb-4">Add Custom Tool/Service</h3>
+
+          {/* Custom Tools List */}
+          {(state.customTools || []).map(tool => (
+            <div key={tool.id} className="flex flex-col sm:flex-row items-center gap-4 mb-4 bg-hg-gray/10 p-4 rounded-lg">
+              <div className="flex-1 font-bold text-hg-navy">{tool.name}</div>
+              <div className="font-medium text-hg-slate">${tool.costPerDoor}/door</div>
+              <div className="text-sm text-hg-slate">
+                Replaced by: <span className="font-bold text-hg-teal">{TOOLS_LIST.find(t => t.id === tool.replacedById)?.name || 'HostGenius'}</span>
+              </div>
+              <button onClick={() => removeCustomTool(tool.id)} className="text-red-400 hover:text-red-600 font-bold text-sm">Remove</button>
+            </div>
+          ))}
+
+          {/* Add New */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+            <div className="md:col-span-1">
+              <label className="block text-xs font-bold text-hg-slate uppercase mb-1">Tool Name</label>
+              <input
+                type="text"
+                className="w-full p-3 bg-hg-gray/10 rounded-lg border border-transparent focus:bg-white focus:border-hg-teal outline-none transition-all"
+                placeholder="e.g. NoiseAware"
+                value={newCustomToolName}
+                onChange={(e) => setNewCustomToolName(e.target.value)}
+              />
+            </div>
+            <div className="md:col-span-1">
+              <label className="block text-xs font-bold text-hg-slate uppercase mb-1">Cost / Door</label>
+              <input
+                type="number"
+                className="w-full p-3 bg-hg-gray/10 rounded-lg border border-transparent focus:bg-white focus:border-hg-teal outline-none transition-all"
+                placeholder="0.00"
+                value={newCustomToolCost}
+                onChange={(e) => setNewCustomToolCost(e.target.value)}
+                min="0"
+              />
+            </div>
+            <div className="md:col-span-1">
+              <label className="block text-xs font-bold text-hg-slate uppercase mb-1">Replaced By</label>
+              <select
+                className="w-full p-3 bg-hg-gray/10 rounded-lg border border-transparent focus:bg-white focus:border-hg-teal outline-none transition-all text-sm appearance-none"
+                value={newCustomToolReplacement}
+                onChange={(e) => setNewCustomToolReplacement(e.target.value)}
+              >
+                <option value="">Select HG Tool...</option>
+                {TOOLS_LIST.map(t => (
+                  <option key={t.id} value={t.id}>{t.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="md:col-span-1">
+              <button
+                onClick={addCustomTool}
+                disabled={!newCustomToolName || !newCustomToolCost}
+                className="w-full p-3 bg-hg-navy text-white font-bold rounded-lg disabled:opacity-50 hover:bg-hg-teal transition-colors"
+              >
+                Add Tool
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -1507,7 +1908,7 @@ const TabTech = ({ state, updateState }: { state: CalculatorState; updateState: 
 
 const TabSummary = ({ state }: { state: CalculatorState }) => {
   const hgCost = calculateHGCost(state.listings);
-  const toolSavings = calculateToolSavings(state.listings, state.tools);
+  const toolSavings = calculateToolSavings(state.listings, state.tools, state.customTools);
   const growth = calculateGrowthUpside(state.newProperties, state.avgAnnualRevenue, state.commissionPercent);
 
   // Calculate total positive value (Growth only now)
@@ -1711,7 +2112,7 @@ const App = () => {
 
   // Calculate Effective Cost for Global Use (Growth Tab needs it)
   // Re-using logic: Savings = calculateToolSavings(1 listing). Monthly total.
-  const savingsResult = calculateToolSavings(1, state.tools);
+  const savingsResult = calculateToolSavings(1, state.tools, state.customTools);
   const effectiveCostPerDoor = Math.max(0, 65 - savingsResult.monthly);
   // Wait, user request: "Any savings beyond $65 results in additional revenue."
   // So effective cost CAN be negative.
@@ -1778,6 +2179,7 @@ const App = () => {
         <div className="flex-1 overflow-y-auto z-10">
 
           {currentView === 'community' && <CommunityView />}
+          {currentView === 'powerups' && <PowerupsView state={state} updateState={updateState} />}
           {currentView === 'dashboard' && <DashboardView />}
           {currentView === 'admin' && <AdminView onLoad={handleAdminLoad} />}
 
@@ -1820,7 +2222,7 @@ const App = () => {
 
                     <div className="flex-1 p-6 sm:p-10">
                       {state.currentTab === 0 && <TabSnapshot state={state} updateState={updateState} />}
-                      {state.currentTab === 1 && <TabWhatYouGet />}
+                      {state.currentTab === 1 && <TabWhatYouGet state={state} updateState={updateState} />}
                       {state.currentTab === 2 && <TabMembership updateState={updateState} />}
                       {state.currentTab === 3 && <TabTech state={state} updateState={updateState} />}
                       {state.currentTab === 4 && <TabGrowth state={state} updateState={updateState} effectiveCostPerDoor={realEffectiveCostPerDoor} />}
