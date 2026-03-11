@@ -69,8 +69,11 @@ export const KNOWLEDGE_BASE: Record<string, KnowledgeCategoryData> = {
                     { label: "The Math", text: "Retail vs. Network Rates." },
                     { label: "Guesty/Hostaway", text: "We pay ~$12 vs Retail ~$35. (Savings: ~$23/listing)." },
                     { label: "PriceLabs", text: "We pay ~$5 vs Retail ~$10. (Savings: ~$5/listing)." },
-                    { label: "Breezeway", text: "We pay ~$5 vs Retail ~$12. (Savings: ~$7/listing)." },
-                    { label: "Total Savings", text: "~$35 per listing, per month. For a 30-unit manager, this is $1,050/mo in savings." }
+                    { label: "Breezeway", text: "We pay $3.49 vs Retail ~$12. (Savings: ~$8.51/listing)." },
+                    { label: "Enso Connect", text: "We pay $5 vs Retail ~$12. (Savings: ~$7/listing)." },
+                    { label: "ConduitAI", text: "We pay $6 vs Retail ~$12. (Savings: ~$6/listing)." },
+                    { label: "SuiteOp", text: "We pay $8 vs Retail ~$15. (Savings: ~$7/listing)." },
+                    { label: "Total Savings", text: "Can exceed ~$50+ per listing, per month. For a 30-unit manager, this is $1,500+/mo in savings." }
                 ],
                 talkTrack: "We aren't tech resellers, but because we have 1,700 units in the network, we get Guesty and PriceLabs for about 70% less than you do. We usually find enough savings in your current software bill to pay for the entire network. It’s essentially a net-zero cost for you."
             },
@@ -79,7 +82,7 @@ export const KNOWLEDGE_BASE: Record<string, KnowledgeCategoryData> = {
                 headline: "The Damage Waiver Profit Center",
                 bullets: [
                     { label: "The Logic", text: "Stop using security deposits (guest friction) or basic insurance (pure cost). Build a \"found money\" revenue stream." },
-                    { label: "The Math", text: "Charge every guest a mandatory $40 \"Peace of Mind\" fee. Pay the Network Rate to the provider (Truvi/Wavo) of $15. Keep the $25 margin." },
+                    { label: "The Math", text: "Charge every guest a mandatory $40 \"Peace of Mind\" fee. Pay the Network Rate to the provider (GuestyShield/Truvi) of $15. Keep the $25 margin." },
                     { label: "The Impact", text: "25 units x 30 bookings/year x $25 margin = $18,750 in pure profit." }
                 ],
                 talkTrack: "Are you still chasing guests for security deposits? Charles has a 'Damage Waiver' hack that generates about $18,000 a year in pure 'found money' for our members. It more than pays for the network membership on its own."
