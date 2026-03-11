@@ -82,10 +82,10 @@ export const KNOWLEDGE_BASE: Record<string, KnowledgeCategoryData> = {
                 headline: "The Damage Waiver Profit Center",
                 bullets: [
                     { label: "The Logic", text: "Stop using security deposits (guest friction) or basic insurance (pure cost). Build a \"found money\" revenue stream." },
-                    { label: "The Math", text: "Charge every guest a mandatory $40 \"Peace of Mind\" fee. Pay the Network Rate to the provider (GuestyShield/Truvi) of $15. Keep the $25 margin." },
-                    { label: "The Impact", text: "25 units x 30 bookings/year x $25 margin = $18,750 in pure profit." }
+                    { label: "The Math", text: "Guests pay a mandatory $25-$40 \"Peace of Mind\" fee. We make $15, Guesty gets $10, and you keep the difference." },
+                    { label: "The Impact", text: "If you charge $40: 25 units x 30 bookings/year x $15 margin = $11,250 in pure profit for doing nothing." }
                 ],
-                talkTrack: "Are you still chasing guests for security deposits? Charles has a 'Damage Waiver' hack that generates about $18,000 a year in pure 'found money' for our members. It more than pays for the network membership on its own."
+                talkTrack: "Are you still chasing guests for security deposits? Charles has a 'Damage Waiver' hack. You charge guests $25 to $40. We take $15, Guesty takes $10, and you pocket the rest. For a 25 unit portfolio, that's over $11,000 a year in pure 'found money' for doing absolutely nothing."
             },
             {
                 id: "guesty-pay-vs-stripe",
