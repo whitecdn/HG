@@ -61,6 +61,12 @@ export interface CalculatorState {
 
   // UI State
   currentTab: number;
+
+  // War Room Notepad State
+  targetVrm: string;
+  portfolioSize: string;
+  targetGeo: string;
+  discoveryNotes: string;
 }
 
 export const TOOLS_LIST: Tool[] = [
@@ -107,5 +113,11 @@ export const INITIAL_STATE: CalculatorState = {
   tools: TOOLS_LIST.map(t => ({ id: t.id, enabled: false, costPerDoor: 0, quantity: 0 })),
   customTools: [],
   newProperties: 0,
-  currentTab: 0
+  currentTab: 0,
+
+  // War Room Notepad Defaults
+  targetVrm: '',
+  portfolioSize: '',
+  targetGeo: '',
+  discoveryNotes: ''
 };
