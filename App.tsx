@@ -2102,6 +2102,9 @@ const TabSummary = ({ state }: { state: CalculatorState }) => {
 
 
 const App = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [passwordInput, setPasswordInput] = useState('');
+  const [passwordError, setPasswordError] = useState(false);
   const [state, setState] = useState<CalculatorState>(INITIAL_STATE);
   const [currentView, setCurrentView] = useState<ViewMode>('calculator');
   const [warRoomCategory, setWarRoomCategory] = useState<string>('Founder Architectures');
@@ -2177,6 +2180,51 @@ const App = () => {
   };
 
   if (!mounted) return null;
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-hg-navy flex flex-col items-center justify-center font-sans">
+        <div className="bg-white p-10 rounded-[2rem] shadow-2xl w-full max-w-sm text-center relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-hg-coral/10 to-hg-teal/10 rounded-full blur-2xl -mr-16 -mt-16 pointer-events-none"></div>
+          
+          <div className="flex justify-center mb-6">
+            <svg width="40" height="40" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-hg-coral">
+              <rect width="32" height="32" rx="8" fill="currentColor" />
+              <path d="M22 10V22M10 22V10L10 10.01M10 22L10 16C10 12.6863 12.6863 10 16 10C19.3137 10 22 12.6863 22 16V22" stroke="white" strokeWidth="3.5" strokeLinecap="square" />
+            </svg>
+          </div>
+          <h1 className="text-3xl font-black text-hg-navy mb-2 tracking-tight">HostGenius</h1>
+          <p className="text-hg-slate mb-8 text-sm font-medium">Please enter the password to access the platform.</p>
+          
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (passwordInput === 'HG123') {
+              setIsAuthenticated(true);
+            } else {
+              setPasswordError(true);
+            }
+          }}>
+            <input
+              type="password"
+              className={`w-full bg-hg-gray/50 border ${passwordError ? 'border-red-500' : 'border-hg-navy/10'} text-hg-navy font-medium rounded-xl px-4 py-3 mb-4 focus:outline-none focus:ring-2 focus:ring-hg-teal transition-all`}
+              placeholder="Password"
+              value={passwordInput}
+              onChange={(e) => { 
+                setPasswordInput(e.target.value); 
+                setPasswordError(false); 
+              }}
+              autoFocus
+            />
+            {passwordError && <p className="text-red-500 text-xs font-bold mb-4">Incorrect password. Please try again.</p>}
+            
+            <button type="submit" className="w-full bg-hg-navy text-white font-bold py-3.5 rounded-xl hover:bg-hg-teal transition-all shadow-lg hover:shadow-hg-teal/20 transform hover:-translate-y-0.5">
+              Enter Platform
+            </button>
+          </form>
+        </div>
+      </div>
+    );
+  }
 
   // Calculate Effective Cost for Global Use (Growth Tab needs it)
   // Re-using logic: Savings = calculateToolSavings(1 listing). Monthly total.
