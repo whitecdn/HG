@@ -81,11 +81,11 @@ export const KNOWLEDGE_BASE: Record<string, KnowledgeCategoryData> = {
                 id: "damage-waiver-profit-center",
                 headline: "The Damage Waiver Profit Center",
                 bullets: [
-                    { label: "The Logic", text: "Stop using security deposits (guest friction) or basic insurance (pure cost). Build a \"found money\" revenue stream." },
-                    { label: "The Math", text: "Guests pay a mandatory $25-$40 \"Peace of Mind\" fee. We make $15, Guesty gets $10, and you keep the difference." },
-                    { label: "The Impact", text: "If you charge $40: 25 units x 30 bookings/year x $15 margin = $11,250 in pure profit for doing nothing." }
+                    { label: "The Logic", text: "Stop using security deposits (guest friction) or basic insurance (pure cost). Build a \"found money\" revenue stream that's a huge selling point in terms of safety and coverage." },
+                    { label: "The Math", text: "Guests pay a mandatory $50 \"Peace of Mind\" fee (or whatever you mark it up to). You pay $40 per reservation to Guesty to cover the waiver." },
+                    { label: "The Impact", text: "You get an extra $10+ per reservation in pure profit, plus extra coverage in case of any damages. It's a win-win: better protection and a new profit center." }
                 ],
-                talkTrack: "Are you still chasing guests for security deposits? Charles has a 'Damage Waiver' hack. You charge guests $25 to $40. We take $15, Guesty takes $10, and you pocket the rest. For a 25 unit portfolio, that's over $11,000 a year in pure 'found money' for doing absolutely nothing."
+                talkTrack: "Are you still chasing guests for security deposits? Charles has a 'Damage Waiver' hack. You charge guests $50 for a waiver. You pay Guesty $40 for the coverage, and you pocket the rest. You get an extra $10 per reservation plus full coverage in case of damages. It becomes a massive selling point for safety, plus a bit of profit!"
             },
             {
                 id: "guesty-pay-vs-stripe",
